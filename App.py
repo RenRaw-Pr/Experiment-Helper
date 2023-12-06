@@ -1,7 +1,12 @@
-import tkinter
+import os
+import sys
 import customtkinter
-import math_func as mf
+from extensions import math_func as mf
 from typing import Union
+
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 class App(customtkinter.CTk):
 
@@ -11,7 +16,7 @@ class App(customtkinter.CTk):
         self.find_center()
         self.title(f'| Prac. tool v {self.VERSION} |')
         self.geometry(f"{self.APP_WIDTH}x{self.APP_HEIGHT}+{int(self.X_APP)}+{int(self.Y_APP)}")
-        self.minsize(865,550)
+        self.minsize(920,550)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.put_main_frames()
         
@@ -21,8 +26,12 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode('Dark')
         customtkinter.set_default_color_theme('blue')
         self.VERSION = '0.0.0.1'
-        self.APP_WIDTH = 865
+        self.APP_WIDTH = 1015
         self.APP_HEIGHT = 550
+
+        self.button_font = customtkinter.CTkFont(family="Square721 BT", size=12)
+        self.info_font = customtkinter.CTkFont(family="Square721 BT", size=14)
+        self.labels_font = customtkinter.CTkFont(family="Square721 BT", size=12)
 
         return 0
     
@@ -49,14 +58,22 @@ class App(customtkinter.CTk):
         self.bind('<Control-q>', lambda event : self.quit())
         return None
 
+    def update_tab(self) -> None:
+        self.bufer_label = customtkinter.CTkLabel(self, height=1, width=1, text='')
+        self.bufer_label.pack()
+        self.after(2, lambda: self.bufer_label.destroy())
+        return None
+    
 class Main_Tabview(customtkinter.CTkTabview):
 
     def __init__(self, master,
                  corner_radius: Union[int, float]=4):
-        super().__init__(master, corner_radius=corner_radius)
-        self.__tabnames = {0: "| Косвенная погрешность |",
+        super().__init__(master, corner_radius=corner_radius, command=lambda: self.master.update_tab())
+        self.__tabnames = {0: "| Indirect error |",
                            1: "| Сравнение на линейной шкале |",
-                           2: "| Построение графиков |"}
+                           2: "| Построение графиков |",
+                           3: "| Instruction |"}
+        self._segmented_button.configure(font=self.master.button_font)
         self.add(self.__tabnames[0])
         self.fill_tab_0()
 
@@ -65,6 +82,9 @@ class Main_Tabview(customtkinter.CTkTabview):
 
         #self.add(self.__tabnames[2])
         #self.fill_tab_2()
+
+        self.add(self.__tabnames[3])
+        self.fill_tab_3()
     
     def fill_tab_0(self) -> None:
         self.INFOBAR = Table_Infobar(self.tab(self.__tabnames[0]))
@@ -76,47 +96,32 @@ class Main_Tabview(customtkinter.CTkTabview):
         self.basic_formula_label = customtkinter.CTkLabel(self.FORMULA_FRAME,
                                                     height=25, width=310,
                                                     corner_radius=5,
-                                                    text="Введите формулу в формате языка Python3.10:")
-        self.basic_formula_label.pack(padx=[5,5], pady=[5,0], anchor='nw')
+                                                    text="Input formula like in Python3.10:",
+                                                    justify='left',
+                                                    font=self.master.info_font)
+        self.basic_formula_label.pack(padx=[5,5], pady=[5,0], anchor='w', fill='x')
 
         self.basic_formula_entry = customtkinter.CTkTextbox(self.FORMULA_FRAME,
                                                             width=310,
                                                             corner_radius=5,
-                                                            wrap='char')
+                                                            wrap='char', font=self.master.info_font)
         self.basic_formula_entry.pack(padx=[5,5], pady=[5,5], anchor='nw')
-        '''
-        self.latex_formula_label = customtkinter.CTkLabel(self.FORMULA_FRAME,
-                                                    height=25,
-                                                    corner_radius=5,
-                                                    text="Введите формулу на языке LaTeX:")
-        self.latex_formula_label.pack(padx=[5,5], pady=[5,0], anchor='nw')
 
-        self.latex_formula_entry = customtkinter.CTkTextbox(self.FORMULA_FRAME,
-                                                      corner_radius=5,
-                                                      wrap='char')
-        self.latex_formula_entry.pack(padx=[5,5], pady=[5,0], anchor='nw', fill='both', expand=True)
-
-        self.res_label = customtkinter.CTkLabel(self.FORMULA_FRAME,
-                                                    height=25,
-                                                    corner_radius=5,
-                                                    text="Визуализация формулы:")
-        self.res_label.pack(padx=[5,5], pady=[5,0], anchor='nw')
-        '''
         self.RESULT_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0]))
         self.RESULT_FRAME.pack(padx=[0,0], pady=[0,0], side='left', fill='y')
 
         self.start_process_button = customtkinter.CTkButton(self.RESULT_FRAME,
-                                                            height=25, width=200, 
+                                                            height=25, width=300, 
                                                             corner_radius=5,
-                                                            text='Начать вычисления',
-                                                            command=lambda: self.get_data())
+                                                            text='= Calculate',
+                                                            font=self.master.button_font,
+                                                            command=lambda: self.get_data_0())
         self.start_process_button.pack(padx=[5,5], pady=[5,0], anchor='nw', fill='x')
 
-        self.result_textbox = customtkinter.CTkTextbox(self.RESULT_FRAME,
-                                                            width=200,
-                                                            corner_radius=5,
-                                                            wrap='char')
-        self.result_textbox.pack(padx=[5,5], pady=[5,5], anchor='nw')
+        self.result_frame = customtkinter.CTkFrame(self.RESULT_FRAME,
+                                                            width=300,
+                                                            corner_radius=5)
+        self.result_frame.pack(padx=[5,5], pady=[5,5], anchor='nw', fill='both', expand=True)
         return None
 
     def fill_tab_1(self) -> None:
@@ -125,11 +130,93 @@ class Main_Tabview(customtkinter.CTkTabview):
     def fill_tab_2(self) -> None:
         return None
 
-    def get_data(self) -> None:
+    def fill_tab_3(self) -> None:
+        self.INSTRUCTION = customtkinter.CTkTextbox(self.tab(self.__tabnames[3]), font=self.master.info_font, wrap='word')
+        self.INSTRUCTION.insert('0.0', ''.join(open(resource_path('data_files/instruction.txt'), encoding='utf-8').readlines()))
+        self.INSTRUCTION.pack(fill='both',expand=True)
+        return None
+    
+    def get_data_0(self) -> None:
         self._data_0 = self.INFOBAR.get_data()
         self._function_value, self._data_0 = mf.transform_data(self.basic_formula_entry.get("0.0", "end"), self._data_0)
         self._summ_error, self._data_0 = mf.count_summ_error(self._data_0)
-        print(self._function_value, self._summ_error, self._data_0)
+        self._function_value, self._summ_error = mf.round_by_error(self._function_value, self._summ_error)
+        
+        self.update_result_tab_0()
+        return None
+    
+    def update_result_tab_0(self) -> None:
+        for child in self.result_frame.winfo_children(): child.destroy()
+        
+        self.VALUE_FRAME = customtkinter.CTkFrame(self.result_frame, fg_color='transparent',)
+        self.VALUE_FRAME.pack(padx=[5,5], pady=[5,0], anchor='nw', fill='x')
+
+        self.label_1 = customtkinter.CTkLabel(self.VALUE_FRAME,
+                                                  anchor='nw', justify='left',
+                                                  text="Expression value:",
+                                                  font=self.master.info_font)
+        self.label_1.pack(padx=[2.5,2.5], pady=[0,0], side='left', anchor='nw')
+        
+        self.value_label = customtkinter.CTkLabel(self.VALUE_FRAME,
+                                                  corner_radius=5,
+                                                  anchor='nw', justify='left',
+                                                  text=str(self._function_value),
+                                                  font=self.master.info_font)
+        self.value_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
+        
+        self.ERROR_FRAME = customtkinter.CTkFrame(self.result_frame, fg_color='transparent')
+        self.ERROR_FRAME.pack(padx=[5,5], pady=[0,0], anchor='nw', fill='x')
+        
+        self.label_2 = customtkinter.CTkLabel(self.ERROR_FRAME,
+                                                  anchor='nw', justify='left',
+                                                  text="Error value:",
+                                                  font=self.master.info_font)
+        self.label_2.pack(padx=[2.5,2.5], pady=[0,0], side='left', anchor='nw')
+        
+        self.error_label = customtkinter.CTkLabel(self.ERROR_FRAME,
+                                                  anchor='nw', justify='left',
+                                                  text=str(self._summ_error),
+                                                  font=self.master.info_font)
+        self.error_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
+
+        self.delimeter = customtkinter.CTkProgressBar(self.result_frame,
+                                                      orientation="horizontal",
+                                                      height=5)
+        self.delimeter.set(1)
+        self.delimeter.pack(padx=[5,5], pady=[0,0], anchor='nw', fill='x')
+
+        self.percent_label = customtkinter.CTkLabel(self.result_frame,
+                                                    anchor='nw', justify='left',
+                                                    text="The error of each variable \nand its contribution to the total error:",
+                                                    font=self.master.labels_font)
+        self.percent_label.pack(padx=[5,5], pady=[5,0], anchor='nw', fill='x')
+
+        self.PERCENT_FRAME = customtkinter.CTkScrollableFrame(self.result_frame)
+        self.PERCENT_FRAME.pack(padx=[5,5], pady=[5,5], anchor='nw', fill='both', expand=True)
+
+        self.PERCENT_FRAME.columnconfigure(0, weight=2)
+        self.PERCENT_FRAME.columnconfigure(1, weight=2)
+        for i, key in enumerate(self._data_0.keys()):
+
+            self.var_name = customtkinter.CTkLabel(self.PERCENT_FRAME,
+                                                   anchor='nw', justify='left',
+                                                   text=key,
+                                                   font=self.master.info_font)
+            self.var_name.grid(row=i, column=0, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
+
+            self.var_error = customtkinter.CTkLabel(self.PERCENT_FRAME,
+                                                    anchor='nw', justify='right',
+                                                   text=str(mf.round_by_meaning(self._data_0[key][3])),
+                                                   font=self.master.info_font)
+            self.var_error.grid(row=i, column=1, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
+
+            self.var_per = customtkinter.CTkLabel(self.PERCENT_FRAME,
+                                                  anchor='nw', justify='right',
+                                                  text=self._data_0[key][4],
+                                                  font=self.master.info_font)
+            self.var_per.grid(row=i, column=2, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
+
+        return None
     
 class Table_Infobar(customtkinter.CTkFrame):
 
@@ -137,9 +224,11 @@ class Table_Infobar(customtkinter.CTkFrame):
                  width: Union[int, float]=400,
                  corner_radius: Union[int, float]=5):
         super().__init__(master, width=width, corner_radius=corner_radius)
-
+        
+        self.font = customtkinter.CTkFont(family="Square721 BT", size=12)
+        
         self.add_row_button = customtkinter.CTkButton(self, height=25, width=60,
-                                                      text='|+| Добавить переменную',
+                                                      text='+ Add variable', font=self.font,
                                                       command=lambda:self.add_row())
         self.add_row_button.pack(padx=[5,5], pady=[5,0], fill='x')
 
@@ -150,13 +239,14 @@ class Table_Infobar(customtkinter.CTkFrame):
 
     def add_row(self) -> None:
         self._rows.append(Variable_row(self.table))
-        self._rows[-1].grid(row=len(self._rows), column=0, padx=[0,0], pady=[0,0])
+        for i, elem in enumerate(self._rows):
+            elem.grid(row=i, column=0, padx=[0,0], pady=[0,0])
         return None
      
     def get_data(self) -> dict:
         self._data = {}
         for elem in self._rows:
-            self._data[elem.name_entry.get()] = [float(elem.value_entry.get()), float(elem.error_entry.get())]
+            self._data[elem.name_entry.get()] = [float(elem.value_entry.get().replace(',', '.')), float(elem.error_entry.get().replace(',', '.'))]
         return self._data
 
 class Variable_row(customtkinter.CTkFrame):
@@ -166,26 +256,26 @@ class Variable_row(customtkinter.CTkFrame):
                  width: Union[int, float]=400,
                  corner_radius: Union[int, float]=5):
         super().__init__(master, height=height, width=width, corner_radius=corner_radius)
-    
+        self.font = customtkinter.CTkFont(family="Square721 BT", size=14)
         self.delete_button = customtkinter.CTkButton(self, height=25, width=25,
-                                                      text='X',
-                                                      command=lambda:self.delete_self(master))
+                                                      text='X', font=self.font,
+                                                      command=lambda:self.delete_self())
         self.delete_button.pack(padx=[0, 0], pady=[2.5, 2.5], side='left')
 
-        self.name_entry = customtkinter.CTkEntry(self, height=25, width=75, 
-                                                 placeholder_text="Название")
-        self.name_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left')
+        self.name_entry = customtkinter.CTkEntry(self, height=25, width=60, 
+                                                 placeholder_text="Name", font=self.font)
+        self.name_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
-        self.value_entry = customtkinter.CTkEntry(self, height=25, width=75, 
-                                                 placeholder_text="Значение")
-        self.value_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left')
+        self.value_entry = customtkinter.CTkEntry(self, height=25, width=120, 
+                                                 placeholder_text="Value", font=self.font)
+        self.value_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
-        self.error_entry = customtkinter.CTkEntry(self, height=25, width=100, 
-                                                 placeholder_text="Погрешность")
-        self.error_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left')
+        self.error_entry = customtkinter.CTkEntry(self, height=25, width=120, 
+                                                 placeholder_text="Error", font=self.font)
+        self.error_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
-    def delete_self(self, master) -> None:
-        master.master.master.master._rows.remove(self)
+    def delete_self(self) -> None:
+        self.master.master.master.master._rows.remove(self)
         self.destroy()
 
 if __name__ == "__main__":
