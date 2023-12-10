@@ -1,5 +1,6 @@
 from sympy import symbols, diff, lambdify, parse_expr
 from typing import Union, List, Dict
+import re
 
 def transform_data(FUNCTION: str,
                    INCOMING_DATA: Dict[str, List[Union[int, float]]]) -> Union[int, float]:
@@ -64,3 +65,9 @@ def round_by_meaning(value: Union[int, float]) -> Union[int, float]:
     if int(value)!=0:
         first_meaning-=len(str(int(value)))
     return round(value, first_meaning)
+
+def find_degre_of_10(value: str) -> int:
+    pattern_1 = r'\*\ *10\ *\*{2}\ *\-{0,}\ *\d{1,}'
+    pattern_2 = r'\*\ *10\ *\^\ *\-{0,}\ *\d{1,}'
+    pattern_3 = r'[+-]?\d{1,}'
+    return(int([re.findall(pattern_3, i.replace(' ', ''))[-1] for i in re.findall(pattern_1, value)+re.findall(pattern_2, value)][0]))

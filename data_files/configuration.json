@@ -1,0 +1,16 @@
+{
+    "SYSTEM_DATA": {
+        "VERSION": "0.0.0.2",
+        "DATE": "2023-09-12"
+    },
+    "DEFAULT_SETTINGS": {
+        "theme": "Dark",
+        "color_theme": "blue",
+        "number_format": "Scientific"
+    },
+    "USER_SETTINGS": {
+        "theme": "Dark",
+        "color_theme": "blue",
+        "number_format": "Scientific"
+    }
+}
