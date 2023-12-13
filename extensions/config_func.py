@@ -13,7 +13,14 @@ class CONFIGURATION():
         if not os.path.exists(self.path):
             self.__create()
         self.file = open(self.path, mode='r', encoding='utf-8')
-        self.data = json.load(self.file)
+        try:
+            self.data = json.load(self.file)
+        except json.decoder.JSONDecodeError:
+            self.file.close()
+            os.remove(self.path)
+            self.__create()
+            self.file = open(self.path, mode='r', encoding='utf-8')
+            self.data = json.load(self.file)
         self.file.close()
 
     def __create(self) -> None:
@@ -21,16 +28,18 @@ class CONFIGURATION():
                                       'DATE' : '2023-09-12'},
                      'DEFAULT_SETTINGS' : {'theme' : 'Dark',
                                            'color_theme' : 'blue',
-                                           'number_format' : 'Scientific'},
+                                           'number_format' : 'Scientific',
+                                           'multiplicity' : 3},
                      'USER_SETTINGS' : {'theme' : 'Dark',
-                                        'color_theme' : 'green',
-                                        'number_format' : 'Scientific'}}
+                                        'color_theme' : 'dark-blue',
+                                        'number_format' : 'Scientific',
+                                        'multiplicity' : 3}}
         self.__write_to_file()
         return None
     
     def __write_to_file(self) -> None:
         with open(self.path, mode='w', encoding='utf-8') as session_file:
-            json.dump(self.data, session_file, indent=4)
+            json.dump(self.data, session_file, indent=2)
 
     def return_to_default(self) -> None:
         for key in self.data['USER_SETTINGS'].keys():
@@ -38,11 +47,11 @@ class CONFIGURATION():
         self.__write_to_file()
         return None
     
-    def get_param(self, key: str) -> Union[str, None]:
+    def get_param(self, key: str) -> Any:
         try: return self.data['USER_SETTINGS'][key]
         except KeyError: return None
 
-    def set_param(self, key: str, new_value: str) -> bool:
+    def set_param(self, key: str, new_value: Any) -> bool:
         if key in self.data["USER_SETTINGS"].keys():
             self.data['USER_SETTINGS'][key] = new_value
             self.__write_to_file()
@@ -59,7 +68,14 @@ class SESSION():
         if not os.path.exists(self.path):
             self.__create()
         self.file = open(self.path, mode='r', encoding='utf-8')
-        self.data = json.load(self.file)
+        try:
+            self.data = json.load(self.file)
+        except json.decoder.JSONDecodeError:
+            self.file.close()
+            os.remove(self.path)
+            self.__create()
+            self.file = open(self.path, mode='r', encoding='utf-8')
+            self.data = json.load(self.file)
         self.file.close()
 
     def __create(self) -> None:
@@ -73,9 +89,9 @@ class SESSION():
 
     def __write_to_file(self) -> None:
         with open(self.path, mode='w', encoding='utf-8') as session_file:
-            json.dump(self.data, session_file, indent=4)
+            json.dump(self.data, session_file, indent=2)
 
-    def get_param(self, tab: str, key: str) -> Union[str, None]:
+    def get_param(self, tab: str, key: str) -> Any:
         try: return self.data[tab][key]
         except KeyError: return None
 

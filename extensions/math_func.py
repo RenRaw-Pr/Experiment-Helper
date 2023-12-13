@@ -1,6 +1,6 @@
 from sympy import symbols, diff, lambdify, parse_expr
+from math import log10,floor
 from typing import Union, List, Dict
-import re
 
 def transform_data(FUNCTION: str,
                    INCOMING_DATA: Dict[str, List[Union[int, float]]]) -> Union[int, float]:
@@ -11,17 +11,17 @@ def transform_data(FUNCTION: str,
     for elem in INCOMING_DATA.keys():
         DIFFERENCIAL = diff(FUNCTION, elem)
         RES = lambdify([key for key in INCOMING_DATA.keys()], DIFFERENCIAL)
-        exec(f"INCOMING_DATA[elem].append(RES{tuple([INCOMING_DATA[key][0] for key in INCOMING_DATA.keys()])})")
+        exec(f"INCOMING_DATA[elem].append(RES{tuple([float(INCOMING_DATA[key][0]['Scientific']) for key in INCOMING_DATA.keys()])})")
 
     RES = lambdify([key for key in INCOMING_DATA.keys()], parse_expr(FUNCTION, transformations="all"))
     result = []
-    exec(f"result.append(RES{tuple([INCOMING_DATA[key][0] for key in INCOMING_DATA.keys()])})")
+    exec(f"result.append(RES{tuple([float(INCOMING_DATA[key][0]['Scientific']) for key in INCOMING_DATA.keys()])})")
     return result[0], INCOMING_DATA
 
 def count_summ_error(INCOMING_DATA: Dict[str, List[Union[int, float]]]) -> Union[int, float]:
     summ_error = 0
     for key in INCOMING_DATA.keys():
-        error = (INCOMING_DATA[key][1]*INCOMING_DATA[key][2])**2
+        error = (float(INCOMING_DATA[key][1]['Scientific'])*INCOMING_DATA[key][2])**2
         INCOMING_DATA[key].append(error)
         summ_error+=error
 
@@ -66,8 +66,11 @@ def round_by_meaning(value: Union[int, float]) -> Union[int, float]:
         first_meaning-=len(str(int(value)))
     return round(value, first_meaning)
 
-def find_degre_of_10(value: str) -> int:
-    pattern_1 = r'\*\ *10\ *\*{2}\ *\-{0,}\ *\d{1,}'
-    pattern_2 = r'\*\ *10\ *\^\ *\-{0,}\ *\d{1,}'
-    pattern_3 = r'[+-]?\d{1,}'
-    return(int([re.findall(pattern_3, i.replace(' ', ''))[-1] for i in re.findall(pattern_1, value)+re.findall(pattern_2, value)][0]))
+def adjusted_scientific_notation(val: float, round_to: int=3) -> Dict[str, str]:
+    order = floor(log10(abs(val)))
+    nearest = round_to*(order//round_to+int(order%round_to==round_to-1))
+    val = str(float("{:.4f}".format(val*10**(-nearest))))
+    exp = "+-"[nearest<0] + str(abs(nearest))
+
+    if exp==('+0' or '-0'): return {"Scientific": val, "Classical": val}
+    else: return {"Scientific" : val+"e"+exp, "Classical" : val+'*10^'+exp}

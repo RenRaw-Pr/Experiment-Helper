@@ -2,9 +2,11 @@ import os
 import sys
 import webbrowser
 import customtkinter
+import subprocess
 from PIL import Image
 from extensions import math_func as mf
 from extensions import config_func as cf
+from extensions import preprocess_func as pf
 from typing import Union
 
 def resource_path(relative_path):
@@ -18,7 +20,6 @@ class App(customtkinter.CTk):
         self.find_center()
         self.title(f'| Experiment Helper v {self.CONFIG.sys_param("VERSION")} |')
         self.geometry(f"{self.APP_WIDTH}x{self.APP_HEIGHT}+{int(self.X_APP)}+{int(self.Y_APP)}")
-        self.minsize(920,550)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.put_main_frames()
         
@@ -31,7 +32,8 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode(self.CONFIG.get_param('theme'))
         customtkinter.set_default_color_theme(self.CONFIG.get_param('color_theme'))
 
-        self.APP_WIDTH = 1015
+        self.minsize(1060,550)
+        self.APP_WIDTH = 1200
         self.APP_HEIGHT = 550
 
         self.OPT_WIDTH = 500
@@ -82,8 +84,8 @@ class App(customtkinter.CTk):
         return None
     
     def save_session(self) -> None:
-        self.SESSION.set_param(tab='tab_0', key='_data_0', new_value=self.maintabview.INFOBAR.get_data())
-        self.SESSION.set_param(tab='tab_0', key='_formula_0', new_value=self.maintabview.basic_formula_entry.get("0.0", "end"))
+        self.SESSION.set_param(tab='tab_0', key='_data_0', new_value=self.maintabview.INFOBAR.get_data(self.CONFIG.get_param("multiplicity")))
+        self.SESSION.set_param(tab='tab_0', key='_formula_0', new_value=self.maintabview.basic_formula_entry.get("0.0", "end").replace('\n', ''))
         return None
 
     def update_tab(self) -> None:
@@ -97,6 +99,7 @@ class Settings_Bar(customtkinter.CTkFrame):
                  height: Union[int, float]=35,
                  corner_radius: Union[int, float]=0):
         super().__init__(master, height=height, corner_radius=corner_radius)
+        self.opt = None
 
         self.settings_button = customtkinter.CTkButton(self, height=25,
                                                       text='Settings',
@@ -117,8 +120,13 @@ class Settings_Bar(customtkinter.CTkFrame):
         self.github_button.pack(padx=[5,5], pady=[5,5], side='right')
 
     def settings(self):
-        self.opt = Settings_window(self.master)
-        self.opt.grab_set()
+        if self.opt is None or not self.opt.winfo_exists():
+            self.master.attributes('-fullscreen', False)
+            self.opt = Settings_window(self.master)
+            self.opt.attributes('-topmost', True)
+            self.opt.focus()
+        else:
+            self.opt.focus()
 
 # --------- FOR TAB 0
 class Main_Tabview(customtkinter.CTkTabview):
@@ -146,12 +154,12 @@ class Main_Tabview(customtkinter.CTkTabview):
     
     def fill_tab_0(self) -> None:
         self.get_data_0(upd_type='ses')
-        self.INFOBAR = Table_Infobar(self.tab(self.__tabnames[0]))
-        self.INFOBAR.pack(padx=[0,5], pady=[0,0], side='left', fill='both', expand=True)
-        self.INFOBAR.insert(self._data_0)
+        self.INFOBAR = Table_Infobar(self.tab(self.__tabnames[0]), width=400)
+        self.INFOBAR.pack(padx=[0,5], pady=[0,0], side='left', fill='both')
+        self.INFOBAR.insert(self._data_0, self.master.CONFIG.get_param("number_format"))
 
         self.FORMULA_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0]))
-        self.FORMULA_FRAME.pack(padx=[0,5], pady=[0,0], side='left', fill='y')
+        self.FORMULA_FRAME.pack(padx=[0,5], pady=[0,0], side='left', fill='both', expand=True)
 
         self.basic_formula_label = customtkinter.CTkLabel(self.FORMULA_FRAME,
                                                     height=25, width=310,
@@ -165,7 +173,7 @@ class Main_Tabview(customtkinter.CTkTabview):
                                                             width=310,
                                                             corner_radius=5,
                                                             wrap='char', font=self.master.info_font)
-        self.basic_formula_entry.pack(padx=[5,5], pady=[5,5], anchor='nw')
+        self.basic_formula_entry.pack(padx=[5,5], pady=[5,5], anchor='nw', fill='x', expand=True)
         self.basic_formula_entry.insert("0.0", str(self._formula_0))
 
         self.RESULT_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0]))
@@ -201,7 +209,7 @@ class Main_Tabview(customtkinter.CTkTabview):
     
     def get_data_0(self, upd_type: str='upd') -> None:
         if upd_type=='upd':
-            self._data_0 = self.INFOBAR.get_data()
+            self._data_0 = self.INFOBAR.get_data(self.master.CONFIG.get_param("multiplicity"))
             self._formula_0 = self.basic_formula_entry.get("0.0", "end")
         if upd_type=='ses':
             self._data_0 = self.master.SESSION.get_param('tab_0', '_data_0')
@@ -211,7 +219,6 @@ class Main_Tabview(customtkinter.CTkTabview):
     def calculate_0(self) -> None:
         self._function_value_0, self._data_0 = mf.transform_data(self._formula_0, self._data_0)
         self._summ_error_0, self._data_0 = mf.count_summ_error(self._data_0)
-        self._function_value_0, self._summ_error_0 = mf.round_by_error(self._function_value_0, self._summ_error_0)
         return None
     
     def display_result_tab_0(self) -> None:
@@ -231,8 +238,11 @@ class Main_Tabview(customtkinter.CTkTabview):
         
         self.value_label = customtkinter.CTkLabel(self.VALUE_FRAME,
                                                   corner_radius=5,
-                                                  anchor='nw', justify='left',
-                                                  text=str(self._function_value_0),
+                                                  anchor='ne', justify='right',
+                                                  text=str(
+                                                      mf.adjusted_scientific_notation(self._function_value_0, 
+                                                                                     self.master.CONFIG.get_param("multiplicity"))[
+                                                                                        self.master.CONFIG.get_param("number_format")]),
                                                   font=self.master.info_font)
         self.value_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
         
@@ -246,8 +256,11 @@ class Main_Tabview(customtkinter.CTkTabview):
         self.label_2.pack(padx=[2.5,2.5], pady=[0,0], side='left', anchor='nw')
 
         self.error_label = customtkinter.CTkLabel(self.ERROR_FRAME,
-                                                  anchor='nw', justify='left',
-                                                  text=str(self._summ_error_0),
+                                                  anchor='ne', justify='left',
+                                                  text=str(
+                                                      mf.adjusted_scientific_notation(self._summ_error_0, 
+                                                                                     self.master.CONFIG.get_param("multiplicity"))[
+                                                                                        self.master.CONFIG.get_param("number_format")]),
                                                   font=self.master.info_font)
         self.error_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
 
@@ -277,13 +290,16 @@ class Main_Tabview(customtkinter.CTkTabview):
             self.var_name.grid(row=i, column=0, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
 
             self.var_error = customtkinter.CTkLabel(self.PERCENT_FRAME,
-                                                    anchor='nw', justify='right',
-                                                   text=str(mf.round_by_meaning(self._data_0[key][3])),
-                                                   font=self.master.info_font)
-            self.var_error.grid(row=i, column=1, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
+                                                    anchor='ne', justify='right',
+                                                    text=str(
+                                                      mf.adjusted_scientific_notation(self._data_0[key][3], 
+                                                                                     self.master.CONFIG.get_param("multiplicity"))[
+                                                                                        self.master.CONFIG.get_param("number_format")]),
+                                                    font=self.master.info_font)
+            self.var_error.grid(row=i, column=1, padx=[2.5, 20], pady=[2.5, 2.5], sticky='NSEW')
 
             self.var_per = customtkinter.CTkLabel(self.PERCENT_FRAME,
-                                                  anchor='nw', justify='right',
+                                                  anchor='ne', justify='right',
                                                   text=self._data_0[key][4],
                                                   font=self.master.info_font)
             self.var_per.grid(row=i, column=2, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
@@ -295,10 +311,9 @@ class Table_Infobar(customtkinter.CTkFrame):
                  width: Union[int, float]=400,
                  corner_radius: Union[int, float]=5):
         super().__init__(master, width=width, corner_radius=corner_radius)
-        
         self.font = customtkinter.CTkFont(family="Square721 BT", size=12)
         
-        self.add_row_button = customtkinter.CTkButton(self, height=25, width=60,
+        self.add_row_button = customtkinter.CTkButton(self, height=25, width=width,
                                                       text='+ Add variable', font=self.font,
                                                       command=lambda:self.add_row())
         self.add_row_button.pack(padx=[5,5], pady=[5,0], fill='x')
@@ -314,19 +329,23 @@ class Table_Infobar(customtkinter.CTkFrame):
             elem.grid(row=i, column=0, padx=[0,0], pady=[0,0])
         return None
      
-    def get_data(self) -> dict:
+    def get_data(self, degree_round: int='3') -> dict:
         self._data = {}
         for elem in self._rows:
-            self._data[elem.name_entry.get()] = [float(elem.value_entry.get().replace(',', '.')), float(elem.error_entry.get().replace(',', '.'))]
+            if elem.name_entry.get()!='':
+                self._data[elem.name_entry.get()] = [
+                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.value_entry.get()), int(degree_round)),
+                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.error_entry.get()), int(degree_round))
+                    ]
         return self._data
     
-    def insert(self, data: dict) -> None:
+    def insert(self, data: dict, number_format: str="Scientific") -> None:
         self._data = data
         for i, key in enumerate(self._data.keys()):
             self.add_row()
             self._rows[i].name_entry.insert(0, key)
-            self._rows[i].value_entry.insert(0, self._data[key][0])
-            self._rows[i].error_entry.insert(0, self._data[key][1])
+            self._rows[i].value_entry.insert(0, self._data[key][0][number_format])
+            self._rows[i].error_entry.insert(0, self._data[key][1][number_format])
         return None
 
 class Variable_row(customtkinter.CTkFrame): 
@@ -345,33 +364,57 @@ class Variable_row(customtkinter.CTkFrame):
                                                  placeholder_text="Name", font=self.font)
         self.name_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
-        self.value_entry = customtkinter.CTkEntry(self, height=25, width=120, 
-                                                 placeholder_text="Value", font=self.font)
+        self.value_entry = customtkinter.CTkEntry(self, height=25, width=140, 
+                                                 placeholder_text="Value", font=self.font,
+                                                 validate='key',
+                                                 validatecommand=(self.register(pf.validate_command), "%P"))
         self.value_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
-        self.error_entry = customtkinter.CTkEntry(self, height=25, width=120, 
-                                                 placeholder_text="Error", font=self.font)
+        self.error_entry = customtkinter.CTkEntry(self, height=25, width=140, 
+                                                 placeholder_text="Error", font=self.font,
+                                                 validate='key',
+                                                 validatecommand=(self.register(pf.validate_command), "%P"))
         self.error_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
-
+    
     def delete_self(self) -> None:
         self.master.master.master.master._rows.remove(self)
         self.destroy()
-
+# ---------
 
 class Develop_frame(customtkinter.CTkFrame): 
     def __init__(self, master,
                  height: Union[int, float]=10,
                  corner_radius: Union[int, float]=0):
         super().__init__(master, height=height, corner_radius=corner_radius)
-        self.label = customtkinter.CTkLabel(self,
+        self.label_1 = customtkinter.CTkLabel(self,
                                             height=8,
                                             corner_radius=corner_radius,
-                                            text=f"Application path: {sys.argv[0]}  "+ 
-                                                 f"Release datetime : {self.master.CONFIG.sys_param('DATE')}   "+ 
-                                                 f"Version : {self.master.CONFIG.sys_param('VERSION')}",
+                                            text=f"Version : {self.master.CONFIG.sys_param('VERSION')}",
                                             anchor='e', 
                                             font=customtkinter.CTkFont(family="Square721 BT", size=8))
-        self.label.pack(padx=[2,2], pady=[2,2], side='right', fill='both', expand=True)
+        self.label_1.pack(padx=[2,2], pady=[2,2], side='right')
+        
+        self.label_2 = customtkinter.CTkLabel(self,
+                                            height=8,
+                                            corner_radius=corner_radius,
+                                            text=f"Application path: {sys.argv[0]}  ",
+                                            anchor='e', 
+                                            font=customtkinter.CTkFont(family="Square721 BT", size=8))
+        self.label_2.pack(padx=[2,2], pady=[2,2], side='right')
+        self.label_2.bind("<Button-1>", lambda e: self.__open_dir())
+
+        self.label_3 = customtkinter.CTkLabel(self,
+                                            height=8,
+                                            corner_radius=corner_radius,
+                                            text=f"Release datetime : {self.master.CONFIG.sys_param('DATE')}",
+                                            anchor='e', 
+                                            font=customtkinter.CTkFont(family="Square721 BT", size=8))
+        self.label_3.pack(padx=[2,2], pady=[2,2], side='right')
+    
+    def __open_dir(self) -> None:
+        if os.path.exists(sys.argv[0]):
+            subprocess.call(["open", "-R", sys.argv[0]])
+        return None
 
 class Settings_window(customtkinter.CTkToplevel):
     def __init__(self, master):
@@ -380,6 +423,7 @@ class Settings_window(customtkinter.CTkToplevel):
         self.geometry(f"{master.OPT_WIDTH}x{master.OPT_HEIGHT}+{int(master.X_OPT)}+{int(master.Y_OPT)}")
         self.resizable(width=False, height=False)
         self.protocol("WM_DELETE_WINDOW", self.__on_closing)
+        self.deiconify()
         
         self.button_font = customtkinter.CTkFont(family="Square721 BT", size=12)
         self.label_font = customtkinter.CTkFont(family="Square721 BT", size=12)
@@ -435,10 +479,26 @@ class Settings_window(customtkinter.CTkToplevel):
         self.optionmenu_1l = customtkinter.CTkOptionMenu(self.frame_left,
                                                         width=(master.OPT_WIDTH-30)/2-20,
                                                         height=25,
-                                                        values=cf.mix_values(["Scientific", "Classic"],
+                                                        values=cf.mix_values(["Scientific", "Classical"],
                                                                                 self.master.CONFIG.get_param('number_format')),
                                                         font=self.button_font)
         self.optionmenu_1l.pack(padx=[5,5], pady=[5,5])
+
+        self.label_2l = customtkinter.CTkLabel(self.frame_left,
+                                                width=(master.OPT_WIDTH-30)/2-20,
+                                                height=20,
+                                                text="Multiplicity of degrees:",
+                                                anchor='w',
+                                                font=self.label_font)
+        self.label_2l.pack(padx=[5,5], pady=[5,5])
+
+        self.optionmenu_2l = customtkinter.CTkOptionMenu(self.frame_left,
+                                                        width=(master.OPT_WIDTH-30)/2-20,
+                                                        height=25,
+                                                        values=list(map(str, cf.mix_values([3, 5],
+                                                                            self.master.CONFIG.get_param('multiplicity')))),
+                                                        font=self.button_font)
+        self.optionmenu_2l.pack(padx=[5,5], pady=[5,5])
 
         self.label_1r = customtkinter.CTkLabel(self.frame_right,
                                                 width=(master.OPT_WIDTH-30)/2-20,
@@ -475,6 +535,8 @@ class Settings_window(customtkinter.CTkToplevel):
         self.keyboard_bind()
 
     def save_button_function(self) -> None:
+        self.master.CONFIG.set_param('number_format', self.optionmenu_1l.get())
+        self.master.CONFIG.set_param('multiplicity', int(self.optionmenu_2l.get()))
         self.master.CONFIG.set_param('theme', self.optionmenu_1r.get())
         self.master.CONFIG.set_param('color_theme', self.optionmenu_2r.get())
         self.master.refresh_by_config()
