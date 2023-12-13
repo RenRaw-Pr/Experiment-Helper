@@ -1,0 +1,12 @@
+pyinstaller --name ExperimentHelper \
+            --clean \
+            --onefile \
+            --windowed \
+            --add-data=data_files/configuration.json:data_files \
+            --add-data=data_files/instruction.txt:data_files \
+            --add-data=data_files/session.json:data_files \
+            --add-data=assets/github_dark_mark.png:assets \
+            --add-data=assets/github_light_mark.png:assets \
+            --distpath=/Users/Dima/Desktop/ \
+            --icon=icon.icns \
+            App.py
