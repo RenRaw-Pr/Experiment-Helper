@@ -335,8 +335,7 @@ class Table_Infobar(customtkinter.CTkFrame):
             if elem.name_entry.get()!='':
                 self._data[elem.name_entry.get()] = [
                     mf.adjusted_scientific_notation(pf.convert_from_entry(elem.value_entry.get()), int(degree_round)),
-                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.error_entry.get()), int(degree_round))
-                    ]
+                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.error_entry.get()), int(degree_round))]
         return self._data
     
     def insert(self, data: dict, number_format: str="Scientific") -> None:

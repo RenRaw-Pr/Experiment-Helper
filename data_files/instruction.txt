@@ -4,16 +4,15 @@
 
 Ⅰ ---- ИНСТРУКЦИЯ (RU)
     1 Описание приложения
-    2 Формулы, используемые при рассчетах
-    3 Описание ошибок, способы их исправления
-    4 Контакты разработчика, ссылки на исходные данные проекта
+    2 Описание ошибок, способы их исправления
+    3 Контакты разработчика, ссылки на исходные данные проекта
 
 II --- INSTRUCTION (EN)
     1 Application description
-    2 Mathematical formulas used in calculations
-    3 Description of errors and ways to fix them
-    4 Developer's contacts, hyperlincks to initial data of the project
+    2 Description of errors and ways to fix them
+    3 Developer's contacts, hyperlincks to initial data of the project
 
+================== I ==================
 =====
   1
 Приложение создано для упрощения рассчетов косвенных погрешностей,
@@ -24,10 +23,8 @@ II --- INSTRUCTION (EN)
 затем введите:
 --- название переменной (поле Name)
     Строго текстовые значения, заглавные и строчные обозначения считаюстся за различные названия
---- значение переменной (поле Value)
-    Строго числовые значения, десятичный разделитель - точка (.) или запятая (,)
---- значение погрешности (поле Error)
-    Строго числовые значения, десятичный разделитель - точка (.) или запятая (,)
+--- значение переменной (поле Value) (для указания степени используется шаблон *10^±x или *10**x или e±x)
+--- значение погрешности (поле Error) (для указания степени используется шаблон *10^±x или *10**x или e±x)
 
 --- формулу выражения в формате языка Python версии 3.10 и ранее
     Использовать в записи формулы ранее добавленные переменные, в ином случае возможны ошибки,
@@ -59,3 +56,92 @@ II --- INSTRUCTION (EN)
 составляет погрешность, вносимая переменной, значение этой погрешности рассчитывается
 как квадрат произведения частной производной функции по переменной и погрешности этой переменной
 
+В панели настроек достуны: 
+--- изменение представления степени (*10^±x или e±x)
+--- выбор кратности степени (в версии 0.0.0.2 доступны 3 или 5, в следующей версии будет добавлен пользовательский ввод) 
+(для облегчения перевода в СИ)
+
+--- Выбор цветовой темы
+--- Выбор цветового оформления
+
+--- Сброс до настроек по умолчанию
+--- Сохранение настроек
+
+=====
+  2
+Данный раздел дорабатывается, добавление обработчика ошибок запланировано на первую версию после выхода из бета-теста
+
+=====
+  3
+Разработано: RenRaw_Pr
+GitHub: https://github.com/RenRaw-Pr
+Репозиторий проекта: https://github.com/RenRaw-Pr/Experiment-Helper
+Группа, для предложений по разработке: https://t.me/+vrFTm4qz-1hkMTAy
+(Прошу простить за отсутствие гиперссылок, думаю, как обыграть покрасивее)
+
+================== II ==================
+=====
+  1
+The application is designed to simplify the calculation of indirect errors,
+plotting linear and other dependencies with the ability to adjust the approximation (in development)
+
+To calculate the indirect error, first add the variables contained in the expression
+using the '+ Add variable' button in the upper-left corner of the '| Indirect error |' section,
+then enter:
+--- name of the variable (Name field)
+    Strictly textual values, uppercase and lowercase designations are considered to be different names
+--- the value of the variable (Value field) (to specify the degree, use the template *10^±x or *10**x or e±x)
+--- error value (Error field) (the template *10^±x or *10**x or e±x is used to indicate the degree)
+
+--- expression formula in Python language format version 3.10 and earlier
+Use previously added variables in the formula entry, otherwise errors may occur,
+related to the calculation of the total error or the result of the expression
+!!!* Use only the dot (.) as the decimal separator in formulas
+(This flaw will be fixed in future versions)
+
+Description of arithmetic operations and their notation in the formula:
+"+" - addition
+"-" - subtraction
+"*" - multiplication
+"/" - division
+"**" - exponentiation (taking the arithmetic root implies a fractional degree)
+
+"ln(x)" is the natural logarithm of x (for variables belonging to the domain of definition)
+"log(x, y)" is the logarithm of the base x of y (for variables belonging to the domain of definition)
+
+Write the formula in the center of the application window in the input field
+Example: sum of squares x and y divided by z: (x**2 + y**2)/z
+
+After clicking on the '= Calculate' button, the results will be displayed
+
+Interpretation of the results:
+
+'Expression value' - the value of the expression when substituting variable values
+'Error value' - the value of the indirect error when substituting the values of variables and their errors
+
+Additional data will be provided below on what percentage of the total error
+is the error introduced by the variable, the value of this error is calculated
+as the square of the product of the partial derivative of the function with respect to the variable and the error of this variable
+
+In the settings panel, get:
+--- change of degree representation (*10^±x or e±x)
+--- degree multiplicity selection (3 or 5 are available in version 0.0.0.2, user input will be added in the next version)
+(to facilitate translation into C)
+
+--- Choosing a color theme
+--- Choice of color design
+
+--- Reset to default settings
+--- Saving settings
+
+=====
+  2
+This section is being finalized, the addition of an error handler is planned for the first version after the release of the beta test
+
+=====
+  3
+Developed by: RenRaw_Pr
+GitHub: https://github.com/RenRaw-Pr
+Project repository: https://github.com/RenRaw-Pr/Experiment-Helper
+The group, for development suggestions: https://t.me/+vrFTm4qz-1hkMTAy
+(I'm sorry for the lack of hyperlinks, I'm thinking how to make it prettier)

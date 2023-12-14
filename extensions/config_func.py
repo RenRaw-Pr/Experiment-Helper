@@ -25,7 +25,7 @@ class CONFIGURATION():
 
     def __create(self) -> None:
         self.data = {'SYSTEM_DATA' : {'VERSION' : '0.0.0.2',
-                                      'DATE' : '2023-09-12'},
+                                      'DATE' : '2023-14-12'},
                      'DEFAULT_SETTINGS' : {'theme' : 'Dark',
                                            'color_theme' : 'blue',
                                            'number_format' : 'Scientific',

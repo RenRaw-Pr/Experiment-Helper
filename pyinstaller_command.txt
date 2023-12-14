@@ -1,6 +1,5 @@
 pyinstaller --name ExperimentHelper \
             --clean \
-            --onefile \
             --windowed \
             --add-data=data_files/configuration.json:data_files \
             --add-data=data_files/instruction.txt:data_files \
