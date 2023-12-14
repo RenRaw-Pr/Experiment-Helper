@@ -67,7 +67,8 @@ def round_by_meaning(value: Union[int, float]) -> Union[int, float]:
     return round(value, first_meaning)
 
 def adjusted_scientific_notation(val: float, round_to: int=3) -> Dict[str, str]:
-    order = floor(log10(abs(val)))
+    try: order = floor(log10(abs(val)))
+    except ValueError: return {"Scientific": 0.0, "Classical": 0.0}
     nearest = round_to*(order//round_to+int(order%round_to==round_to-1))
     val = str(float("{:.4f}".format(val*10**(-nearest))))
     exp = "+-"[nearest<0] + str(abs(nearest))
