@@ -70,7 +70,7 @@ def adjusted_scientific_notation(val: float, round_to: int=3) -> Dict[str, str]:
     try: order = floor(log10(abs(val)))
     except ValueError: return {"Scientific": 0.0, "Classical": 0.0}
     nearest = round_to*(order//round_to+int(order%round_to==round_to-1))
-    val = str(float("{:.4f}".format(val*10**(-nearest))))
+    val = str("{:.4f}".format(float(val*10**(-nearest))))
     exp = "+-"[nearest<0] + str(abs(nearest))
 
     if exp==('+0' or '-0'): return {"Scientific": val, "Classical": val}

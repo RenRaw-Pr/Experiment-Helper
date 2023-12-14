@@ -3,26 +3,26 @@
     "_data_0": {
       "x": [
         {
-          "Scientific": 0.0,
-          "Classical": 0.0
+          "Scientific": "23.1223e-3",
+          "Classical": "23.1223*10^-3"
         },
         {
-          "Scientific": 0.0,
-          "Classical": 0.0
+          "Scientific": "2.0000",
+          "Classical": "2.0000"
         }
       ],
       "y": [
         {
-          "Scientific": 0.0,
-          "Classical": 0.0
+          "Scientific": "42.0000",
+          "Classical": "42.0000"
         },
         {
-          "Scientific": 0.0,
-          "Classical": 0.0
+          "Scientific": "4.0000",
+          "Classical": "4.0000"
         }
       ]
     },
-    "_formula_0": ""
+    "_formula_0": "x+y/0.01"
   },
   "tab_1": {},
   "tab_2": {},

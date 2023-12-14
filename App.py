@@ -380,7 +380,7 @@ class Variable_row(customtkinter.CTkFrame):
         self.destroy()
 # ---------
 
-class Develop_frame(customtkinter.CTkFrame): 
+class Develop_frame(customtkinter.CTkFrame):
     def __init__(self, master,
                  height: Union[int, float]=10,
                  corner_radius: Union[int, float]=0):
