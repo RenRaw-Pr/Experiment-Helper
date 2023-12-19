@@ -5,6 +5,7 @@ def validate_command(value: str) -> bool:
     if value.count(',')+value.count('.')<=1:
         value = value.replace(' ', '').replace(',', '.')
         if value in ['', ' ', '.', ',', '-', '+']: return True
+        if re.compile("[cC]?[oO]?[nN]?[sS]?[tT]?").fullmatch(value): return True
         if re.compile("[-+]?(?:\d*(?:\.\d*)?|\.\d*)(?:[eE](?:[-+]?(?:\d+)?)?)?").fullmatch(value): return True
         if re.compile("[-+]?(?:\d*(?:\.\d*)?|\.\d*)(?:\*(?:1(?:0(?:[\^](?:[-+]?(?:\d+)?)?)?)?)?)?").fullmatch(value): return True
         if re.compile("[-+]?(?:\d*(?:\.\d*)?|\.\d*)(?:\*(?:1(?:0(?:\*(?:\*(?:[-+]?(?:\d+)?)?)?)?)?)?)?").fullmatch(value): return True  

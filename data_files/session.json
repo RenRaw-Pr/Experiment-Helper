@@ -7,8 +7,8 @@
           "Classical": "23.1223*10^-3"
         },
         {
-          "Scientific": "2.0000",
-          "Classical": "2.0000"
+          "Scientific": "0.2000",
+          "Classical": "0.2000"
         }
       ],
       "y": [
@@ -17,12 +17,22 @@
           "Classical": "42.0000"
         },
         {
-          "Scientific": "4.0000",
-          "Classical": "4.0000"
+          "Scientific": "4.0000e-3",
+          "Classical": "4.0000*10^-3"
+        }
+      ],
+      "z": [
+        {
+          "Scientific": "23.0000",
+          "Classical": "23.0000"
+        },
+        {
+          "Scientific": "1.0000e-3",
+          "Classical": "1.0000*10^-3"
         }
       ]
     },
-    "_formula_0": "x+y/0.01"
+    "_formula_0": "ln(x, y)"
   },
   "tab_1": {},
   "tab_2": {},
