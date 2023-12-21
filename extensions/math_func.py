@@ -14,7 +14,7 @@ def transform_data(FUNCTION: str,
             RES = lambdify([key for key in INCOMING_DATA.keys()], DIFFERENCIAL)
             exec(f"INCOMING_DATA[elem].append(RES{tuple([float(INCOMING_DATA[key][0]['Scientific']) for key in INCOMING_DATA.keys()])})")
         else: INCOMING_DATA[elem].append(0)
-
+        
     RES = lambdify([key for key in INCOMING_DATA.keys()], parse_expr(FUNCTION, transformations="all"))
     result = []
     exec(f"result.append(RES{tuple([float(INCOMING_DATA[key][0]['Scientific']) for key in INCOMING_DATA.keys()])})")

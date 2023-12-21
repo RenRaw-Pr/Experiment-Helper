@@ -2,6 +2,7 @@ import re
 
 def validate_command(value: str) -> bool:
     if value=='Value' or value=='Error': return True
+    if value=='Значение' or value=='Погрешность': return True
     if value.count(',')+value.count('.')<=1:
         value = value.replace(' ', '').replace(',', '.')
         if value in ['', ' ', '.', ',', '-', '+']: return True

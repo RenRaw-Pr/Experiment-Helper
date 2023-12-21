@@ -1,18 +1,22 @@
 {
   "SYSTEM_DATA": {
-    "VERSION": "0.0.0.2",
-    "DATE": "2023-14-12"
+    "VERSION": "0.0.0.3",
+    "DATE": "2023-22-12"
   },
   "DEFAULT_SETTINGS": {
     "theme": "Dark",
     "color_theme": "blue",
     "number_format": "Scientific",
-    "multiplicity": 3
+    "multiplicity": 3,
+    "language": "EN",
+    "font_family": "Apple Braille"
   },
   "USER_SETTINGS": {
     "theme": "Dark",
     "color_theme": "dark-blue",
-    "number_format": "Classical",
-    "multiplicity": 3
+    "number_format": "Scientific",
+    "multiplicity": 3,
+    "language": "EN",
+    "font_family": "Apple Braille"
   }
 }

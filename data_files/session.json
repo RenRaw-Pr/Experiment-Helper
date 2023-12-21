@@ -1,38 +1,28 @@
 {
   "tab_0": {
     "_data_0": {
-      "x": [
+      "X": [
         {
-          "Scientific": "23.1223e-3",
-          "Classical": "23.1223*10^-3"
+          "Scientific": "10.0000",
+          "Classical": "10.0000"
+        },
+        {
+          "Scientific": "0.5000",
+          "Classical": "0.5000"
+        }
+      ],
+      "Y": [
+        {
+          "Scientific": "20.0000",
+          "Classical": "20.0000"
         },
         {
           "Scientific": "0.2000",
           "Classical": "0.2000"
         }
-      ],
-      "y": [
-        {
-          "Scientific": "42.0000",
-          "Classical": "42.0000"
-        },
-        {
-          "Scientific": "4.0000e-3",
-          "Classical": "4.0000*10^-3"
-        }
-      ],
-      "z": [
-        {
-          "Scientific": "23.0000",
-          "Classical": "23.0000"
-        },
-        {
-          "Scientific": "1.0000e-3",
-          "Classical": "1.0000*10^-3"
-        }
       ]
     },
-    "_formula_0": "ln(x, y)"
+    "_formula_0": "X**2+Y**2"
   },
   "tab_1": {},
   "tab_2": {},

@@ -26,8 +26,8 @@ class App(customtkinter.CTk):
         self.keyboard_bind()
 
     def params(self) -> None:
-        self.CONFIG = cf.CONFIGURATION("../data_files/configuration.json")
-        self.SESSION = cf.SESSION("../data_files/session.json")
+        self.CONFIG = cf.CONFIGURATION()
+        self.SESSION = cf.SESSION()
         
         customtkinter.set_appearance_mode(self.CONFIG.get_param('theme'))
         customtkinter.set_default_color_theme(self.CONFIG.get_param('color_theme'))
@@ -39,9 +39,13 @@ class App(customtkinter.CTk):
         self.OPT_WIDTH = 500
         self.OPT_HEIGHT = 500
 
-        self.button_font = customtkinter.CTkFont(family="Square721 BT", size=12)
-        self.info_font = customtkinter.CTkFont(family="Square721 BT", size=14)
-        self.labels_font = customtkinter.CTkFont(family="Square721 BT", size=12)
+        self.FORM_WIDTH = 500
+        self.FORM_HEIGHT = 500
+
+        self.button_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=12)
+        self.info_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=14)
+        self.label_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=12)
+        self.develop_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=8)
 
         return 0
     
@@ -54,16 +58,22 @@ class App(customtkinter.CTk):
 
         self.X_OPT = (SCREEN_WIDTH / 2) - (self.OPT_WIDTH / 2)
         self.Y_OPT = (SCREEN_HEIGHT / 2) - (self.OPT_HEIGHT / 2)
+
+        self.X_FORM = (SCREEN_WIDTH / 2) - (self.FORM_WIDTH / 2)
+        self.Y_FORM = (SCREEN_HEIGHT / 2) - (self.FORM_HEIGHT / 2)
         
         return None
 
     def put_main_frames(self) -> None:
-        self.settings_bar = Settings_Bar(self)
+        self.settings_bar = Settings_Bar(master=self, root=self)
         self.settings_bar.pack(fill='x')
-        self.maintabview = Main_Tabview(self)
+
+        self.maintabview = Main_Tabview(master=self, root=self)
         self.maintabview.pack(fill='both', expand=True)
-        self.dev_frame = Develop_frame(self)
+
+        self.dev_frame = Develop_frame(master=self, root=self)
         self.dev_frame.pack(padx=[0,0], pady=[1,1], fill='x')
+
         return None
     
     def on_closing(self, event=0) -> None:
@@ -76,6 +86,11 @@ class App(customtkinter.CTk):
         return None
 
     def refresh_by_config(self) -> None:
+        self.button_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=12)
+        self.info_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=14)
+        self.label_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=12)
+        self.develop_font = customtkinter.CTkFont(family=self.CONFIG.get_param('font_family'), size=8)
+        
         customtkinter.set_appearance_mode(self.CONFIG.get_param('theme'))
         customtkinter.set_default_color_theme(self.CONFIG.get_param('color_theme'))
         self.save_session()
@@ -84,7 +99,7 @@ class App(customtkinter.CTk):
         return None
     
     def save_session(self) -> None:
-        self.SESSION.set_param(tab='tab_0', key='_data_0', new_value=self.maintabview.INFOBAR.get_data(self.CONFIG.get_param("multiplicity")))
+        self.SESSION.set_param(tab='tab_0', key='_data_0', new_value=self.maintabview.INFOBAR.get_data())
         self.SESSION.set_param(tab='tab_0', key='_formula_0', new_value=self.maintabview.basic_formula_entry.get("0.0", "end").replace('\n', ''))
         return None
 
@@ -96,14 +111,17 @@ class App(customtkinter.CTk):
 
 class Settings_Bar(customtkinter.CTkFrame):
     def __init__(self, master,
+                 root: customtkinter.CTk,
                  height: Union[int, float]=35,
                  corner_radius: Union[int, float]=0):
         super().__init__(master, height=height, corner_radius=corner_radius)
+        self.root = root
         self.opt = None
 
         self.settings_button = customtkinter.CTkButton(self, height=25,
-                                                      text='Settings',
-                                                      font=self.master.button_font,
+                                                      text={'EN' : 'Settings',
+                                                            'RU' : 'Настройки'}[self.root.CONFIG.get_param('language')],
+                                                      font=self.root.button_font,
                                                       command=lambda: self.settings())
         self.settings_button.pack(padx=[5,0], pady=[5,5], side='left')
 
@@ -112,14 +130,14 @@ class Settings_Bar(customtkinter.CTkFrame):
                                                  size=(17, 17))
 
         self.github_button = customtkinter.CTkButton(self, height=25, width=25,
-                                                    text="GitHub", font=self.master.button_font,
+                                                    text="GitHub", font=self.root.button_font,
                                                     image=self.github_img, compound='right',
                                                     round_height_to_even_numbers=False,
                                                     round_width_to_even_numbers=False,
                                                     command=lambda:webbrowser.open_new("https://github.com/RenRaw-Pr/Experiment-Helper.git"))
         self.github_button.pack(padx=[5,5], pady=[5,5], side='right')
 
-    def settings(self):
+    def settings(self) -> None:
         if self.opt is None or not self.opt.winfo_exists():
             self.master.attributes('-fullscreen', False)
             self.opt = Settings_window(self.master)
@@ -127,63 +145,75 @@ class Settings_Bar(customtkinter.CTkFrame):
             self.opt.focus()
         else:
             self.opt.focus()
+        return None
 
 # --------- FOR TAB 0
 class Main_Tabview(customtkinter.CTkTabview):
     def __init__(self, master,
+                 root: customtkinter.CTk,
                  corner_radius: Union[int, float]=4):
         super().__init__(master, corner_radius=corner_radius, command=lambda: self.master.update_tab())
-        self.__tabnames = {0: "| Indirect error |",
-                           1: "| Сравнение на линейной шкале |",
-                           2: "| Построение графиков |",
-                           3: "| Instruction |"}
+        self.root = root
+        self.__tabnames = {0: {'EN' : "| Indirect error |",
+                               'RU' : "| Косвенная погрешность |"},
+
+                           1: {'EN' : "| Сompare on a Lin. scale |",
+                               'RU' : "| Сравнение на Лин. шкале |"},
+
+                           3: {'EN' : "| Instruction |",
+                               'RU' : "| Инструкция |"}}
         
-        self._segmented_button.configure(font=self.master.button_font)
-        self.add(self.__tabnames[0])
+        self._segmented_button.configure(font=self.root.button_font)
+        self.add(self.__tabnames[0][self.root.CONFIG.get_param('language')])
         self.fill_tab_0()
 
+        self.add(self.__tabnames[1][self.root.CONFIG.get_param('language')])
+        self.fill_tab_1()
 
-        #self.add(self.__tabnames[1])
-        #self.fill_tab_1()
-
-        #self.add(self.__tabnames[2])
-        #self.fill_tab_2()
-
-        self.add(self.__tabnames[3])
+        self.add(self.__tabnames[3][self.root.CONFIG.get_param('language')])
         self.fill_tab_3()
     
     def fill_tab_0(self) -> None:
         self.get_data_0(upd_type='ses')
-        self.INFOBAR = Table_Infobar(self.tab(self.__tabnames[0]), width=400)
+        self.INFOBAR = Table_Infobar(master=self.tab(self.__tabnames[0][self.root.CONFIG.get_param('language')]), root=self.root, width=400)
         self.INFOBAR.pack(padx=[0,5], pady=[0,0], side='left', fill='both')
-        self.INFOBAR.insert(self._data_0, self.master.CONFIG.get_param("number_format"))
+        self.INFOBAR.insert(self._data_0)
 
-        self.FORMULA_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0]))
+        self.FORMULA_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0][self.root.CONFIG.get_param('language')]))
         self.FORMULA_FRAME.pack(padx=[0,5], pady=[0,0], side='left', fill='both', expand=True)
 
         self.basic_formula_label = customtkinter.CTkLabel(self.FORMULA_FRAME,
                                                     height=25, width=310,
                                                     corner_radius=5,
-                                                    text="Input formula like in Python3.10:",
+                                                    text={'EN' : 'Input formula like in Python3.10:',
+                                                          'RU' : 'Введите формулу как в Python3.10:'}[self.root.CONFIG.get_param('language')],
                                                     justify='left',
-                                                    font=self.master.info_font)
+                                                    font=self.root.info_font)
         self.basic_formula_label.pack(padx=[5,5], pady=[5,0], anchor='w', fill='x')
 
         self.basic_formula_entry = customtkinter.CTkTextbox(self.FORMULA_FRAME,
                                                             width=310,
                                                             corner_radius=5,
-                                                            wrap='char', font=self.master.info_font)
+                                                            wrap='char', font=self.root.info_font)
         self.basic_formula_entry.pack(padx=[5,5], pady=[5,5], anchor='nw', fill='x', expand=True)
         self.basic_formula_entry.insert("0.0", str(self._formula_0))
-
-        self.RESULT_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0]))
+        
+        '''
+        self.formula_img = customtkinter.CTkImage(dark_image=Image.open(resource_path("dark.png")),
+                                                 light_image=Image.open(resource_path("light.png")), size=(Image.open(resource_path("dark.png")).size))
+        self.formula_visualisation = customtkinter.CTkLabel(self.FORMULA_FRAME, text=None, image=self.formula_img)
+        self.formula_visualisation.pack(padx=[5,5], pady=[5,5], anchor='sw', fill='x', expand=True)
+        '''
+        
+        self.RESULT_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0][self.root.CONFIG.get_param('language')]))
         self.RESULT_FRAME.pack(padx=[0,0], pady=[0,0], side='left', fill='y')
 
         self.start_process_button = customtkinter.CTkButton(self.RESULT_FRAME,
                                                             height=25, width=300, 
                                                             corner_radius=5,
-                                                            text='= Calculate',
-                                                            font=self.master.button_font,
+                                                            text={'EN' : '= Calculate',
+                                                                  'RU' : '= Посчитать'}[self.root.CONFIG.get_param('language')],
+                                                            font=self.root.button_font,
                                                             command=lambda: self.display_result_tab_0())
         self.start_process_button.pack(padx=[5,5], pady=[5,0], anchor='nw', fill='x')
 
@@ -197,23 +227,20 @@ class Main_Tabview(customtkinter.CTkTabview):
 
     def fill_tab_1(self) -> None:
         return None
-    
-    def fill_tab_2(self) -> None:
-        return None
 
     def fill_tab_3(self) -> None:
-        self.INSTRUCTION = customtkinter.CTkTextbox(self.tab(self.__tabnames[3]), font=self.master.info_font, wrap='word')
+        self.INSTRUCTION = customtkinter.CTkTextbox(self.tab(self.__tabnames[3][self.root.CONFIG.get_param('language')]), font=self.root.info_font, wrap='word')
         self.INSTRUCTION.insert('0.0', ''.join(open(resource_path('data_files/instruction.txt'), encoding='utf-8').readlines()))
         self.INSTRUCTION.pack(fill='both',expand=True)
         return None
     
     def get_data_0(self, upd_type: str='upd') -> None:
         if upd_type=='upd':
-            self._data_0 = self.INFOBAR.get_data(self.master.CONFIG.get_param("multiplicity"))
+            self._data_0 = self.INFOBAR.get_data()
             self._formula_0 = self.basic_formula_entry.get("0.0", "end")
         if upd_type=='ses':
-            self._data_0 = self.master.SESSION.get_param('tab_0', '_data_0')
-            self._formula_0 = self.master.SESSION.get_param('tab_0', '_formula_0')
+            self._data_0 = self.root.SESSION.get_param('tab_0', '_data_0')
+            self._formula_0 = self.root.SESSION.get_param('tab_0', '_formula_0')
         return None
 
     def calculate_0(self) -> None:
@@ -232,8 +259,9 @@ class Main_Tabview(customtkinter.CTkTabview):
 
         self.label_1 = customtkinter.CTkLabel(self.VALUE_FRAME,
                                                   anchor='nw', justify='left',
-                                                  text="Expression value:",
-                                                  font=self.master.info_font)
+                                                  text={'EN' : 'Expression value:',
+                                                        'RU' : 'Значение выражения:'}[self.root.CONFIG.get_param('language')],
+                                                  font=self.root.info_font)
         self.label_1.pack(padx=[2.5,2.5], pady=[0,0], side='left', anchor='nw')
         
         self.value_label = customtkinter.CTkLabel(self.VALUE_FRAME,
@@ -241,9 +269,9 @@ class Main_Tabview(customtkinter.CTkTabview):
                                                   anchor='ne', justify='right',
                                                   text=str(
                                                       mf.adjusted_scientific_notation(self._function_value_0, 
-                                                                                     self.master.CONFIG.get_param("multiplicity"))[
-                                                                                        self.master.CONFIG.get_param("number_format")]),
-                                                  font=self.master.info_font)
+                                                                                     self.root.CONFIG.get_param("multiplicity"))[
+                                                                                        self.root.CONFIG.get_param("number_format")]),
+                                                  font=self.root.info_font)
         self.value_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
         
         self.ERROR_FRAME = customtkinter.CTkFrame(self.result_frame, fg_color='transparent')
@@ -251,17 +279,18 @@ class Main_Tabview(customtkinter.CTkTabview):
         
         self.label_2 = customtkinter.CTkLabel(self.ERROR_FRAME,
                                                   anchor='nw', justify='left',
-                                                  text="Error value:",
-                                                  font=self.master.info_font)
+                                                  text={'EN' : 'Error value:',
+                                                        'RU' : 'Значение погрешности:'}[self.root.CONFIG.get_param('language')],
+                                                  font=self.root.info_font)
         self.label_2.pack(padx=[2.5,2.5], pady=[0,0], side='left', anchor='nw')
 
         self.error_label = customtkinter.CTkLabel(self.ERROR_FRAME,
                                                   anchor='ne', justify='left',
                                                   text=str(
                                                       mf.adjusted_scientific_notation(self._summ_error_0, 
-                                                                                     self.master.CONFIG.get_param("multiplicity"))[
-                                                                                        self.master.CONFIG.get_param("number_format")]),
-                                                  font=self.master.info_font)
+                                                                                     self.root.CONFIG.get_param("multiplicity"))[
+                                                                                        self.root.CONFIG.get_param("number_format")]),
+                                                  font=self.root.info_font)
         self.error_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
 
         self.delimeter = customtkinter.CTkProgressBar(self.result_frame,
@@ -272,8 +301,9 @@ class Main_Tabview(customtkinter.CTkTabview):
 
         self.percent_label = customtkinter.CTkLabel(self.result_frame,
                                                     anchor='nw', justify='left',
-                                                    text="The error of each variable \nand its contribution to the total error:",
-                                                    font=self.master.labels_font)
+                                                    text={'EN' : 'The error of each variable \nand its contribution to the total error:',
+                                                          'RU' : 'Погрешность по каждой переменной\nи её вклад в общую погрешность:'}[self.root.CONFIG.get_param('language')],
+                                                    font=self.root.label_font)
         self.percent_label.pack(padx=[5,5], pady=[5,0], anchor='nw', fill='x')
 
         self.PERCENT_FRAME = customtkinter.CTkScrollableFrame(self.result_frame)
@@ -281,96 +311,126 @@ class Main_Tabview(customtkinter.CTkTabview):
 
         self.PERCENT_FRAME.columnconfigure(0, weight=2)
         self.PERCENT_FRAME.columnconfigure(1, weight=2)
+        
         for i, key in enumerate(self._data_0.keys()):
-
             self.var_name = customtkinter.CTkLabel(self.PERCENT_FRAME,
                                                    anchor='nw', justify='left',
                                                    text=key,
-                                                   font=self.master.info_font)
+                                                   font=self.root.info_font)
             self.var_name.grid(row=i, column=0, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
 
             self.var_error = customtkinter.CTkLabel(self.PERCENT_FRAME,
                                                     anchor='ne', justify='right',
                                                     text=str(
                                                       mf.adjusted_scientific_notation(self._data_0[key][3], 
-                                                                                     self.master.CONFIG.get_param("multiplicity"))[
-                                                                                        self.master.CONFIG.get_param("number_format")]),
-                                                    font=self.master.info_font)
+                                                                                     self.root.CONFIG.get_param("multiplicity"))[
+                                                                                        self.root.CONFIG.get_param("number_format")]),
+                                                    font=self.root.info_font)
             self.var_error.grid(row=i, column=1, padx=[2.5, 20], pady=[2.5, 2.5], sticky='NSEW')
 
             self.var_per = customtkinter.CTkLabel(self.PERCENT_FRAME,
                                                   anchor='ne', justify='right',
                                                   text=self._data_0[key][4],
-                                                  font=self.master.info_font)
+                                                  font=self.root.info_font)
             self.var_per.grid(row=i, column=2, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
-
         return None
    
 class Table_Infobar(customtkinter.CTkFrame):
     def __init__(self, master,
+                 root: customtkinter.CTk,
                  width: Union[int, float]=400,
                  corner_radius: Union[int, float]=5):
         super().__init__(master, width=width, corner_radius=corner_radius)
-        self.font = customtkinter.CTkFont(family="Square721 BT", size=12)
+        self.root = root
+        self.choose = None
         
         self.add_row_button = customtkinter.CTkButton(self, height=25, width=width,
-                                                      text='+ Add variable', font=self.font,
+                                                      text={'EN' : '+ Add variable',
+                                                            'RU' : '+ Добавить переменную'}[self.root.CONFIG.get_param('language')],
+                                                      font=self.root.button_font,
                                                       command=lambda:self.add_row())
         self.add_row_button.pack(padx=[5,5], pady=[5,0], fill='x')
 
         self.table = customtkinter.CTkScrollableFrame(self)
-        self.table.pack(padx=[5,5], pady=[5,5], fill='both', expand=True)
+        self.table.pack(padx=[5,5], pady=[5,0], fill='both', expand=True)
+
+        self.choose_finished_formula = customtkinter.CTkButton(self, height=25, width=width,
+                                                      text={'EN' : 'Choose finished formula',
+                                                            'RU' : 'Выбрать готовую формулу'}[self.root.CONFIG.get_param('language')],
+                                                      font=self.root.button_font,
+                                                      command=lambda:self.choose_formula())
+        self.choose_finished_formula.pack(padx=[5,5], pady=[5,5], fill='x')
 
         self._rows = []
 
     def add_row(self) -> None:
-        self._rows.append(Variable_row(self.table))
+        self._rows.append(Variable_row(master=self.table, root=self.root))
         for i, elem in enumerate(self._rows):
             elem.grid(row=i, column=0, padx=[0,0], pady=[0,0])
         return None
      
-    def get_data(self, degree_round: int='3') -> dict:
+    def get_data(self) -> dict:
         self._data = {}
         for elem in self._rows:
             if elem.name_entry.get()!='':
                 self._data[elem.name_entry.get()] = [
-                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.value_entry.get()), int(degree_round)),
-                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.error_entry.get()), int(degree_round))]
+                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.value_entry.get()),
+                                                    int(self.root.CONFIG.get_param("multiplicity"))),
+                    mf.adjusted_scientific_notation(pf.convert_from_entry(elem.error_entry.get()),
+                                                    int(self.root.CONFIG.get_param("multiplicity")))]
         return self._data
     
-    def insert(self, data: dict, number_format: str="Scientific") -> None:
+    def insert(self, data: dict) -> None:
         self._data = data
         for i, key in enumerate(self._data.keys()):
             self.add_row()
             self._rows[i].name_entry.insert(0, key)
-            self._rows[i].value_entry.insert(0, self._data[key][0][number_format])
-            self._rows[i].error_entry.insert(0, self._data[key][1][number_format])
+            self._rows[i].value_entry.insert(0, self._data[key][0][self.root.CONFIG.get_param("number_format")])
+            self._rows[i].error_entry.insert(0, self._data[key][1][self.root.CONFIG.get_param("number_format")])
+        return None
+
+    def choose_formula(self) -> None:
+        if self.choose is None or not self.choose.winfo_exists():
+            self.root.attributes('-fullscreen', False)
+            self.choose = Choose_formula_window(self.root)
+            self.choose.attributes('-topmost', True)
+            self.choose.focus()
+        else:
+            self.choose.focus()
         return None
 
 class Variable_row(customtkinter.CTkFrame): 
     def __init__(self, master,
+                 root: customtkinter.CTk,
                  height: Union[int, float]=40,
                  width: Union[int, float]=400,
                  corner_radius: Union[int, float]=5):
         super().__init__(master, height=height, width=width, corner_radius=corner_radius)
-        self.font = customtkinter.CTkFont(family="Square721 BT", size=14)
+        self.root=root
+
         self.delete_button = customtkinter.CTkButton(self, height=25, width=25,
-                                                      text='X', font=self.font,
+                                                      text='X', font=self.root.info_font,
                                                       command=lambda:self.delete_self())
         self.delete_button.pack(padx=[0, 0], pady=[2.5, 2.5], side='left')
 
         self.name_entry = customtkinter.CTkEntry(self, height=25, width=60, 
-                                                 placeholder_text="Name", font=self.font)
+                                                 placeholder_text={'EN' : 'Name',
+                                                                   'RU' : 'Назв.'}[self.root.CONFIG.get_param('language')],
+                                                 font=self.root.info_font)
         self.name_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
         self.value_entry = customtkinter.CTkEntry(self, height=25, width=140, 
-                                                 placeholder_text="Value", font=self.font,
+                                                 placeholder_text={'EN' : 'Value',
+                                                                   'RU' : 'Значение'}[self.root.CONFIG.get_param('language')],
+                                                 font=self.root.info_font,
                                                  validate='key',
                                                  validatecommand=(self.register(pf.validate_command), "%P"))
         self.value_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
 
         self.error_entry = customtkinter.CTkEntry(self, height=25, width=140, 
-                                                 placeholder_text="Error", font=self.font,
+                                                 placeholder_text={'EN' : 'Error',
+                                                                   'RU' : 'Погрешность'}[self.root.CONFIG.get_param('language')],
+                                                 font=self.root.info_font,
                                                  validate='key',
                                                  validatecommand=(self.register(pf.validate_command), "%P"))
         self.error_entry.pack(padx=[2.5, 0], pady=[2.5, 2.5], side='left', fill='x', expand=True)
@@ -382,15 +442,18 @@ class Variable_row(customtkinter.CTkFrame):
 
 class Develop_frame(customtkinter.CTkFrame):
     def __init__(self, master,
+                 root: customtkinter.CTk,
                  height: Union[int, float]=10,
                  corner_radius: Union[int, float]=0):
         super().__init__(master, height=height, corner_radius=corner_radius)
+        self.root = root
+
         self.label_1 = customtkinter.CTkLabel(self,
                                             height=8,
                                             corner_radius=corner_radius,
-                                            text=f"Version : {self.master.CONFIG.sys_param('VERSION')}",
+                                            text=f"Version : {self.root.CONFIG.sys_param('VERSION')}",
                                             anchor='e', 
-                                            font=customtkinter.CTkFont(family="Square721 BT", size=8))
+                                            font=self.root.develop_font)
         self.label_1.pack(padx=[2,2], pady=[2,2], side='right')
         
         self.label_2 = customtkinter.CTkLabel(self,
@@ -398,16 +461,16 @@ class Develop_frame(customtkinter.CTkFrame):
                                             corner_radius=corner_radius,
                                             text=f"Application path: {sys.argv[0]}  ",
                                             anchor='e', 
-                                            font=customtkinter.CTkFont(family="Square721 BT", size=8))
+                                            font=self.root.develop_font)
         self.label_2.pack(padx=[2,2], pady=[2,2], side='right')
         self.label_2.bind("<Button-1>", lambda e: self.__open_dir())
 
         self.label_3 = customtkinter.CTkLabel(self,
                                             height=8,
                                             corner_radius=corner_radius,
-                                            text=f"Release datetime : {self.master.CONFIG.sys_param('DATE')}",
+                                            text=f"Release datetime : {self.root.CONFIG.sys_param('DATE')}",
                                             anchor='e', 
-                                            font=customtkinter.CTkFont(family="Square721 BT", size=8))
+                                            font=self.root.develop_font)
         self.label_3.pack(padx=[2,2], pady=[2,2], side='right')
     
     def __open_dir(self) -> None:
@@ -423,9 +486,6 @@ class Settings_window(customtkinter.CTkToplevel):
         self.resizable(width=False, height=False)
         self.protocol("WM_DELETE_WINDOW", self.__on_closing)
         self.deiconify()
-        
-        self.button_font = customtkinter.CTkFont(family="Square721 BT", size=12)
-        self.label_font = customtkinter.CTkFont(family="Square721 BT", size=12)
 
         self.frame_left = customtkinter.CTkFrame(self,
                                                 width=(master.OPT_WIDTH-30)/2,
@@ -448,8 +508,9 @@ class Settings_window(customtkinter.CTkToplevel):
         self.save_button = customtkinter.CTkButton(self.frame_save, 
                                                     width=(master.OPT_WIDTH-30)/2-10, 
                                                     height=20,
-                                                    text="SAVE SETTINGS",
-                                                    font=self.button_font,
+                                                    text={'EN' : 'SAVE SETTINGS',
+                                                          'RU' : 'СОХРАНИТЬ НАСТРОЙКИ'}[self.master.CONFIG.get_param('language')],
+                                                    font=self.master.button_font,
                                                     command=lambda: self.save_button_function())
         self.save_button.pack(padx=5, pady=5)
 
@@ -462,17 +523,19 @@ class Settings_window(customtkinter.CTkToplevel):
         self.default_button = customtkinter.CTkButton(self.frame_default, 
                                                     width=(master.OPT_WIDTH-30)/2-10, 
                                                     height=20,
-                                                    text="RESET SETTINGS",
-                                                    font=self.button_font,
+                                                    text={'EN' : 'RESET SETTINGS',
+                                                          'RU' : 'СБРОСИТЬ НАСТРОЙКИ'}[self.master.CONFIG.get_param('language')],
+                                                    font=self.master.button_font,
                                                     command=lambda: self.default_button_func())
         self.default_button.pack(padx=5, pady=5)
 
         self.label_1l = customtkinter.CTkLabel(self.frame_left,
                                                 width=(master.OPT_WIDTH-30)/2-20,
                                                 height=20,
-                                                text="Number format:",
+                                                text={'EN' : 'Number format:',
+                                                      'RU' : 'Формат представления чисел:'}[self.master.CONFIG.get_param('language')],
                                                 anchor='w',
-                                                font=self.label_font)
+                                                font=self.master.label_font)
         self.label_1l.pack(padx=[5,5], pady=[5,5])
 
         self.optionmenu_1l = customtkinter.CTkOptionMenu(self.frame_left,
@@ -480,15 +543,16 @@ class Settings_window(customtkinter.CTkToplevel):
                                                         height=25,
                                                         values=cf.mix_values(["Scientific", "Classical"],
                                                                                 self.master.CONFIG.get_param('number_format')),
-                                                        font=self.button_font)
+                                                        font=self.master.button_font)
         self.optionmenu_1l.pack(padx=[5,5], pady=[5,5])
 
         self.label_2l = customtkinter.CTkLabel(self.frame_left,
                                                 width=(master.OPT_WIDTH-30)/2-20,
                                                 height=20,
-                                                text="Multiplicity of degrees:",
+                                                text={'EN' : 'Multiplicity of degrees:',
+                                                      'RU' : 'Кратность степеней:'}[self.master.CONFIG.get_param('language')],
                                                 anchor='w',
-                                                font=self.label_font)
+                                                font=self.master.label_font)
         self.label_2l.pack(padx=[5,5], pady=[5,5])
 
         self.optionmenu_2l = customtkinter.CTkOptionMenu(self.frame_left,
@@ -496,15 +560,16 @@ class Settings_window(customtkinter.CTkToplevel):
                                                         height=25,
                                                         values=list(map(str, cf.mix_values([3, 5],
                                                                             self.master.CONFIG.get_param('multiplicity')))),
-                                                        font=self.button_font)
+                                                        font=self.master.button_font)
         self.optionmenu_2l.pack(padx=[5,5], pady=[5,5])
 
         self.label_1r = customtkinter.CTkLabel(self.frame_right,
                                                 width=(master.OPT_WIDTH-30)/2-20,
                                                 height=20,
-                                                text="Theme:",
+                                                text={'EN' : 'Theme:',
+                                                      'RU' : 'Режим:'}[self.master.CONFIG.get_param('language')],
                                                 anchor='w',
-                                                font=self.label_font)
+                                                font=self.master.label_font)
         self.label_1r.pack(padx=[5,5], pady=[5,5])
         
         self.optionmenu_1r = customtkinter.CTkOptionMenu(self.frame_right,
@@ -512,15 +577,16 @@ class Settings_window(customtkinter.CTkToplevel):
                                                         height=25,
                                                         values=cf.mix_values(["Dark", "Light"],
                                                                                 self.master.CONFIG.get_param('theme')),
-                                                        font=self.button_font)
+                                                        font=self.master.button_font)
         self.optionmenu_1r.pack(padx=[5,5], pady=[5,5])
 
         self.label_2r = customtkinter.CTkLabel(self.frame_right,
                                                 width=(master.OPT_WIDTH-30)/2-20,
                                                 height=20,
-                                                text="Color theme:",
+                                                text={'EN' : 'Color theme:',
+                                                      'RU' : 'Цветовой тон:'}[self.master.CONFIG.get_param('language')],
                                                 anchor='w',
-                                                font=self.label_font)
+                                                font=self.master.label_font)
         self.label_2r.pack(padx=[5,5], pady=[5,5])
 
         self.optionmenu_2r = customtkinter.CTkOptionMenu(self.frame_right,
@@ -528,8 +594,43 @@ class Settings_window(customtkinter.CTkToplevel):
                                                         height=25,
                                                         values=cf.mix_values(["blue", "dark-blue", "green"],
                                                                                 self.master.CONFIG.get_param('color_theme')),
-                                                        font=self.button_font)
+                                                        font=self.master.button_font)
         self.optionmenu_2r.pack(padx=[5,5], pady=[5,5])
+   
+        self.label_3r = customtkinter.CTkLabel(self.frame_right,
+                                                width=(master.OPT_WIDTH-30)/2-20,
+                                                height=20,
+                                                text={'EN' : 'Select language:',
+                                                      'RU' : 'Выбор языка:'}[self.master.CONFIG.get_param('language')],
+                                                anchor='w',
+                                                font=self.master.label_font)
+        self.label_3r.pack(padx=[5,5], pady=[5,5])
+
+        self.optionmenu_3r = customtkinter.CTkOptionMenu(self.frame_right,
+                                                        width=(master.OPT_WIDTH-30)/2-20,
+                                                        height=25,
+                                                        values=cf.mix_values(['EN', 'RU'],
+                                                                            self.master.CONFIG.get_param('language')),
+                                                        font=self.master.button_font)
+        self.optionmenu_3r.pack(padx=[5,5], pady=[5,5]) 
+
+        self.label_4r = customtkinter.CTkLabel(self.frame_right,
+                                                width=(master.OPT_WIDTH-30)/2-20,
+                                                height=20,
+                                                text={'EN' : 'Select font:',
+                                                      'RU' : 'Выбор шрифта:'}[self.master.CONFIG.get_param('language')],
+                                                anchor='w',
+                                                font=self.master.label_font)
+        self.label_4r.pack(padx=[5,5], pady=[5,5])
+
+        self.optionmenu_4r = customtkinter.CTkOptionMenu(self.frame_right,
+                                                        width=(master.OPT_WIDTH-30)/2-20,
+                                                        height=25,
+                                                        values=cf.mix_values(['Square721 BT', 'Apple Braille', 
+                                                                              'Courier New', 'Copperplate'],
+                                                                            self.master.CONFIG.get_param('font_family')),
+                                                        font=self.master.button_font)
+        self.optionmenu_4r.pack(padx=[5,5], pady=[5,5])          
         
         self.keyboard_bind()
 
@@ -538,6 +639,8 @@ class Settings_window(customtkinter.CTkToplevel):
         self.master.CONFIG.set_param('multiplicity', int(self.optionmenu_2l.get()))
         self.master.CONFIG.set_param('theme', self.optionmenu_1r.get())
         self.master.CONFIG.set_param('color_theme', self.optionmenu_2r.get())
+        self.master.CONFIG.set_param('language', self.optionmenu_3r.get())
+        self.master.CONFIG.set_param('font_family', self.optionmenu_4r.get())
         self.master.refresh_by_config()
         self.__on_closing()
         return None
@@ -550,7 +653,7 @@ class Settings_window(customtkinter.CTkToplevel):
 
     def keyboard_bind(self) -> None:
         self.bind('<Control-d>', lambda event : self.default_button_func())
-        self.bind('<Control-q>', lambda event : self.on_closing())
+        self.bind('<Control-q>', lambda event : self.__on_closing())
         return None
 
     def __on_closing(self, event=0) -> None:
@@ -558,6 +661,38 @@ class Settings_window(customtkinter.CTkToplevel):
         self.destroy()
         return None
 
+class Choose_formula_window(customtkinter.CTkToplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title('| Choose formula |')
+        self.geometry(f"{master.FORM_WIDTH}x{master.FORM_HEIGHT}+{int(master.X_FORM)}+{int(master.Y_FORM)}")
+        self.resizable(width=False, height=False)
+        self.protocol("WM_DELETE_WINDOW", self.__on_closing)
+        self.deiconify()
+
+        self.frame_left = customtkinter.CTkFrame(self,
+                                                width=(master.OPT_WIDTH-30)/2,
+                                                height=master.OPT_HEIGHT-20,
+                                                corner_radius=10)
+        self.frame_left.pack(padx=[10,5], pady=10, side='left', fill='both')
+        
+        self.frame_right = customtkinter.CTkFrame(self,
+                                                width=(master.OPT_WIDTH-30)/2,
+                                                height=master.OPT_HEIGHT-100,
+                                                corner_radius=10)
+        self.frame_right.pack(padx=[5,10], pady=[10,0], side='top', fill='both', expand=True)
+        
+        self.keyboard_bind()
+
+    def keyboard_bind(self) -> None:
+        self.bind('<Control-q>', lambda event : self.__on_closing())
+        return None
+
+    def __on_closing(self, event=0) -> None:
+        self.master.focus_force()
+        self.destroy()
+        return None
+    
 if __name__ == "__main__":
     app = App()
     app.mainloop()
