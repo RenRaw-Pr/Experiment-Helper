@@ -13,6 +13,10 @@ def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
+def copy_to_clipboard(self, data: str):
+    self.root.clipboard_clear()
+    self.root.clipboard_append(data)
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -99,8 +103,10 @@ class App(customtkinter.CTk):
         return None
     
     def save_session(self) -> None:
-        self.SESSION.set_param(tab='tab_0', key='_data_0', new_value=self.maintabview.INFOBAR.get_data())
+        self.SESSION.set_param(tab='tab_0', key='_data_0', new_value=self.maintabview.INFOBAR_0.get_data())
         self.SESSION.set_param(tab='tab_0', key='_formula_0', new_value=self.maintabview.basic_formula_entry.get("0.0", "end").replace('\n', ''))
+        
+        self.SESSION.set_param(tab='tab_1', key='_data_1', new_value=self.maintabview.INFOBAR_1.get_data())
         return None
 
     def update_tab(self) -> None:
@@ -108,6 +114,7 @@ class App(customtkinter.CTk):
         self.bufer_label.pack()
         self.after(2, lambda: self.bufer_label.destroy())
         return None
+
 
 class Settings_Bar(customtkinter.CTkFrame):
     def __init__(self, master,
@@ -147,7 +154,6 @@ class Settings_Bar(customtkinter.CTkFrame):
             self.opt.focus()
         return None
 
-# --------- FOR TAB 0
 class Main_Tabview(customtkinter.CTkTabview):
     def __init__(self, master,
                  root: customtkinter.CTk,
@@ -175,9 +181,9 @@ class Main_Tabview(customtkinter.CTkTabview):
     
     def fill_tab_0(self) -> None:
         self.get_data_0(upd_type='ses')
-        self.INFOBAR = Table_Infobar(master=self.tab(self.__tabnames[0][self.root.CONFIG.get_param('language')]), root=self.root, width=400)
-        self.INFOBAR.pack(padx=[0,5], pady=[0,0], side='left', fill='both')
-        self.INFOBAR.insert(self._data_0)
+        self.INFOBAR_0 = Table_Infobar(master=self.tab(self.__tabnames[0][self.root.CONFIG.get_param('language')]), root=self.root, width=400)
+        self.INFOBAR_0.pack(padx=[0,5], pady=[0,0], side='left', fill='both')
+        self.INFOBAR_0.insert(self._data_0)
 
         self.FORMULA_FRAME = customtkinter.CTkFrame(self.tab(self.__tabnames[0][self.root.CONFIG.get_param('language')]))
         self.FORMULA_FRAME.pack(padx=[0,5], pady=[0,0], side='left', fill='both', expand=True)
@@ -226,21 +232,37 @@ class Main_Tabview(customtkinter.CTkTabview):
         return None
 
     def fill_tab_1(self) -> None:
+        self.get_data_1(upd_type='ses')
+        self.INFOBAR_1 = Table_Infobar(master=self.tab(self.__tabnames[1][self.root.CONFIG.get_param('language')]), root=self.root, width=400)
+        self.INFOBAR_1.pack(padx=[0,5], pady=[0,0], side='left', fill='both')
+        self.INFOBAR_1.insert(self._data_1)
+
+        self.VIS_FRAME = Linear_Scale(master=self.tab(self.__tabnames[1][self.root.CONFIG.get_param('language')]), root=self.root)
+        self.VIS_FRAME.pack(padx=[0,0], pady=[0,0], side='left', fill='both', expand=True)
         return None
 
     def fill_tab_3(self) -> None:
         self.INSTRUCTION = customtkinter.CTkTextbox(self.tab(self.__tabnames[3][self.root.CONFIG.get_param('language')]), font=self.root.info_font, wrap='word')
         self.INSTRUCTION.insert('0.0', ''.join(open(resource_path('data_files/instruction.txt'), encoding='utf-8').readlines()))
         self.INSTRUCTION.pack(fill='both',expand=True)
+        self.INSTRUCTION.configure(state='disabled')
+        
         return None
     
     def get_data_0(self, upd_type: str='upd') -> None:
         if upd_type=='upd':
-            self._data_0 = self.INFOBAR.get_data()
+            self._data_0 = self.INFOBAR_0.get_data()
             self._formula_0 = self.basic_formula_entry.get("0.0", "end")
         if upd_type=='ses':
             self._data_0 = self.root.SESSION.get_param('tab_0', '_data_0')
             self._formula_0 = self.root.SESSION.get_param('tab_0', '_formula_0')
+        return None
+    
+    def get_data_1(self, upd_type: str='upd') -> None:
+        if upd_type=='upd':
+            self._data_1 = self.INFOBAR_1.get_data()
+        if upd_type=='ses':
+            self._data_1 = self.root.SESSION.get_param('tab_1', '_data_1')
         return None
 
     def calculate_0(self) -> None:
@@ -273,6 +295,7 @@ class Main_Tabview(customtkinter.CTkTabview):
                                                                                         self.root.CONFIG.get_param("number_format")]),
                                                   font=self.root.info_font)
         self.value_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
+        self.value_label.bind('<ButtonPress>', lambda event: copy_to_clipboard(self, self.value_label.cget('text')))
         
         self.ERROR_FRAME = customtkinter.CTkFrame(self.result_frame, fg_color='transparent')
         self.ERROR_FRAME.pack(padx=[5,5], pady=[0,0], anchor='nw', fill='x')
@@ -292,6 +315,7 @@ class Main_Tabview(customtkinter.CTkTabview):
                                                                                         self.root.CONFIG.get_param("number_format")]),
                                                   font=self.root.info_font)
         self.error_label.pack(padx=[2.5,2.5], pady=[0,0], side='right', anchor='ne')
+        self.error_label.bind('<ButtonPress>', lambda event: copy_to_clipboard(self, self.error_label.cget('text')))
 
         self.delimeter = customtkinter.CTkProgressBar(self.result_frame,
                                                       orientation="horizontal",
@@ -333,6 +357,7 @@ class Main_Tabview(customtkinter.CTkTabview):
                                                   text=self._data_0[key][4],
                                                   font=self.root.info_font)
             self.var_per.grid(row=i, column=2, padx=[2.5, 2.5], pady=[2.5, 2.5], sticky='NSEW')
+
         return None
    
 class Table_Infobar(customtkinter.CTkFrame):
@@ -438,7 +463,22 @@ class Variable_row(customtkinter.CTkFrame):
     def delete_self(self) -> None:
         self.master.master.master.master._rows.remove(self)
         self.destroy()
-# ---------
+
+class Linear_Scale(customtkinter.CTkFrame):
+    def __init__(self, master,
+                 root: customtkinter.CTk,
+                 height: Union[int, float]=40,
+                 width: Union[int, float]=400,
+                 corner_radius: Union[int, float]=5):
+        super().__init__(master, height=height, corner_radius=corner_radius)
+        self.root=root
+
+        self.vis_button = customtkinter.CTkButton(self, height=25,
+                                                      text={'EN' : 'Visualize data',
+                                                            'RU' : 'Визуализировать данные'}[self.root.CONFIG.get_param('language')],
+                                                      font=self.root.button_font,
+                                                      command=lambda: None)
+        self.vis_button.pack(padx=[5,5], pady=[5,0], fill='x')
 
 class Develop_frame(customtkinter.CTkFrame):
     def __init__(self, master,
@@ -477,6 +517,7 @@ class Develop_frame(customtkinter.CTkFrame):
         if os.path.exists(sys.argv[0]):
             subprocess.call(["open", "-R", sys.argv[0]])
         return None
+
 
 class Settings_window(customtkinter.CTkToplevel):
     def __init__(self, master):

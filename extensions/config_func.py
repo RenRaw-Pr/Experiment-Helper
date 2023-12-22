@@ -84,11 +84,13 @@ class SESSION():
 
     def __create(self) -> None:
         self.__data = {'tab_0' : {
-                        '_data_0' : {},
-                        '_formula_0' : ""},
-                     'tab_1' : {},
-                     'tab_2' : {},
-                     'tab_3' : {}}
+                            '_data_0' : {},
+                            '_formula_0' : ""},
+                       'tab_1' : {
+                            '_data_1' : {}
+                       },
+                       'tab_2' : {},
+                       'tab_3' : {}}
         self.__write_to_file()
 
     def __write_to_file(self) -> None:

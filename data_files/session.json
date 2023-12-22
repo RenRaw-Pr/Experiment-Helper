@@ -24,7 +24,30 @@
     },
     "_formula_0": "X**2+Y**2"
   },
-  "tab_1": {},
+  "tab_1": {
+    "_data_1": {
+      "A": [
+        {
+          "Scientific": "40.0000",
+          "Classical": "40.0000"
+        },
+        {
+          "Scientific": "5.0000",
+          "Classical": "5.0000"
+        }
+      ],
+      "Z": [
+        {
+          "Scientific": "30.0000",
+          "Classical": "30.0000"
+        },
+        {
+          "Scientific": "1.0000",
+          "Classical": "1.0000"
+        }
+      ]
+    }
+  },
   "tab_2": {},
   "tab_3": {}
 }
